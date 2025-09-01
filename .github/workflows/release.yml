@@ -32,13 +32,13 @@ jobs:
         run: |
           if [ "$RUNNER_OS" == "Windows" ]; then
             pyinstaller --onefile --name har-img-cli extract_images.py
-            pyinstaller --onefile --name har-img-app --add-data "templates;templates" --add-data "static;static" app.py
+            pyinstaller --onefile --name har-img-app --add-data "templates;templates" app.py
           elif [ "$RUNNER_OS" == "macOS" ]; then
             pyinstaller --onefile --name har-img-cli extract_images.py
-            pyinstaller --onefile --name har-img-app --add-data "templates:templates" --add-data "static:static" app.py
+            pyinstaller --onefile --name har-img-app --add-data "templates:templates" app.py
           else
             pyinstaller --onefile --name har-img-cli extract_images.py
-            pyinstaller --onefile --name har-img-app --add-data "templates:templates" --add-data "static:static" app.py
+            pyinstaller --onefile --name har-img-app --add-data "templates:templates" app.py
           fi
         shell: bash
 
