@@ -31,14 +31,14 @@ jobs:
       - name: Build CLI and Flask executables
         run: |
           if [ "$RUNNER_OS" == "Windows" ]; then
-            pyinstaller --onefile --name har-img-cli extract_images.py
-            pyinstaller --onefile --name har-img-app --add-data "templates;templates" app.py
+            pyinstaller --onefile --name har-img-cli-windows extract_images.py
+            pyinstaller --onefile --name har-img-app-windows --add-data "templates;templates" app.py
           elif [ "$RUNNER_OS" == "macOS" ]; then
-            pyinstaller --onefile --name har-img-cli extract_images.py
-            pyinstaller --onefile --name har-img-app --add-data "templates:templates" app.py
+            pyinstaller --onefile --name har-img-cli-macos extract_images.py
+            pyinstaller --onefile --name har-img-app-macos --add-data "templates:templates" app.py
           else
-            pyinstaller --onefile --name har-img-cli extract_images.py
-            pyinstaller --onefile --name har-img-app --add-data "templates:templates" app.py
+            pyinstaller --onefile --name har-img-cli-linux extract_images.py
+            pyinstaller --onefile --name har-img-app-linux --add-data "templates:templates" app.py
           fi
         shell: bash
 
@@ -59,5 +59,7 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          files: dist/**
+          files: |
+            dist/har-img-cli*
+            dist/har-img-app*
           token: ${{ secrets.GH_RELEASE_TOKEN }}
