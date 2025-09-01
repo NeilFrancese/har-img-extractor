@@ -59,7 +59,5 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          files: |
-            dist/har-img-cli*
-            dist/har-img-app*
+          files: dist/**
           token: ${{ secrets.GH_RELEASE_TOKEN }}
