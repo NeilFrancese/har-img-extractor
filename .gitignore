@@ -31,3 +31,9 @@ test_archives/
 
 # Other
 *.sqlite3
+
+# PyInstaller build artifacts
+dist/
+build/
+*.spec
+*.exe
