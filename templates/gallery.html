@@ -7,27 +7,81 @@
     <style>
         body { margin: 2em; }
         .container { max-width: 900px; margin: auto; }
-        .gallery { display: flex; flex-wrap: wrap; gap: 1em; }
-        .gallery-item { width: 200px; word-break: break-all; }
-        .gallery-item img { max-width: 100%; max-height: 150px; display: block; margin-bottom: 0.5em; }
+        .gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 2em;
+            justify-items: center;
+            align-items: start;
+        }
+        .gallery-item {
+            background: #fafafa;
+            border-radius: 6px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+            padding: 1em;
+            width: 100%;
+            max-width: 260px;
+            min-height: 340px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            box-sizing: border-box;
+        }
+        .preview-box {
+            width: 220px;
+            aspect-ratio: 16/9;
+            background: #eaeaea;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            margin-bottom: 0.7em;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+        }
+        .gallery-item img, .gallery-item video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 4px;
+            display: block;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h2>Extracted Images</h2>
-    <a href="/" class="button">Back</a>
+        <a href="/" class="button">Back</a>
         <form id="downloadAllForm" method="post" action="/download_all" style="display:inline;">
             {% for image in images %}
                 <input type="hidden" name="urls" value="{{ image.url }}">
             {% endfor %}
             <button type="submit" class="button button-outline">Download All</button>
         </form>
-        <div class="gallery">
+
+        <div style="margin: 1em 0;">
+            <label for="minSize">Min Size (KB):</label>
+            <input type="number" id="minSize" value="0" style="width:80px;">
+            <button type="button" class="button" onclick="filterGallery()">Apply Filter</button>
+        </div>
+
+        <div class="gallery" id="gallery">
             {% for image in images %}
-            <div class="gallery-item">
-                <img src="{{ image.url }}" alt="Image {{ image.id }}">
+            <div class="gallery-item" data-size="{{ image.content_length // 1024 if image.content_length else 0 }}">
+                {% if image.mime_type.startswith('image/') %}
+                    <img src="{{ image.data_url }}" alt="Image {{ image.id }}">
+                {% elif image.mime_type.startswith('video/') %}
+                    <video controls style="max-width:100%; max-height:150px; display:block; margin-bottom:0.5em;">
+                        <source src="{{ image.data_url }}" type="{{ image.mime_type }}">
+                        Your browser does not support the video tag.
+                    </video>
+                {% endif %}
                 <div style="margin: 0.5em 0; font-size: 0.95em; color: #555;">
-                    <strong>{{ image.filename }}</strong>
+                    <span style="font-size:0.95em;color:#555;">Type: {{ image.mime_type }}</span><br>
+                    {% if image.content_length %}
+                        <span class="item-size" style="font-size:0.95em;color:#888;">Size: {{ (image.content_length // 1024) }} KB</span>
+                    {% endif %}
                 </div>
                 <div>
                     <a href="/download_image?filename={{ image.filename }}" class="button">Download</a>
@@ -36,5 +90,19 @@
             {% endfor %}
         </div>
     </div>
+    <script>
+    function filterGallery() {
+        var min = parseInt(document.getElementById('minSize').value) || 0;
+        var items = document.querySelectorAll('.gallery-item');
+        items.forEach(function(item) {
+            var size = parseInt(item.getAttribute('data-size')) || 0;
+            if (size >= min) {
+                item.style.display = '';
+            } else {
+                item.style.display = 'none';
+            }
+        });
+    }
+    </script>
 </body>
 </html>

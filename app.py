@@ -27,19 +27,29 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
 
 def extract_image_entries(har_data):
-    image_entries = []
+    media_entries = []
     for entry in har_data['log']['entries']:
         url = entry['request']['url']
         response = entry.get('response', {})
         mime_type = response.get('content', {}).get('mimeType', '')
         base64_data = response.get('content', {}).get('text') if response.get('content', {}).get('encoding') == 'base64' else None
-        if mime_type.startswith('image/'):
-            image_entries.append({
+        # Get content-length from headers if available
+        content_length = None
+        for h in response.get('headers', []):
+            if h.get('name', '').lower() == 'content-length':
+                try:
+                    content_length = int(h.get('value'))
+                except Exception:
+                    content_length = None
+                break
+        if mime_type.startswith('image/') or mime_type.startswith('video/'):
+            media_entries.append({
                 'url': url,
                 'mime_type': mime_type,
-                'base64_data': base64_data
+                'base64_data': base64_data,
+                'content_length': content_length
             })
-    return image_entries
+    return media_entries
 
 
 import base64
@@ -67,21 +77,29 @@ def index():
             session['har_id'] = har_id
             with open(har_save_path, 'r', encoding='utf-8') as f:
                 har_data = json.load(f)
-            image_entries = extract_image_entries(har_data)
+            media_entries = extract_image_entries(har_data)
             from urllib.parse import urlparse
-            images = []
-            base64_images = [entry for entry in image_entries if entry.get('base64_data')]
-            for i, entry in enumerate(base64_images):
+            media = []
+            base64_media = [entry for entry in media_entries if entry.get('base64_data')]
+            for i, entry in enumerate(base64_media):
                 parsed_url = urlparse(entry['url'])
                 filename = os.path.basename(parsed_url.path)
-                images.append({
+                # Prepare base64 data URL for preview
+                data_url = None
+                if entry.get('base64_data'):
+                    data_url = f"data:{entry['mime_type']};base64,{entry['base64_data']}"
+                # Use content_length from entry, fallback to None
+                content_length = entry.get('content_length')
+                media.append({
                     'url': entry['url'],
                     'mime_type': entry['mime_type'],
                     'id': i,
-                    'filename': filename
+                    'filename': filename,
+                    'data_url': data_url,
+                    'content_length': content_length
                 })
-            # Do NOT store image_entries or large data in session
-            return render_template('gallery.html', images=images)
+            # Do NOT store media_entries or large data in session
+            return render_template('gallery.html', images=media)
     return render_template('index.html')
 
 
