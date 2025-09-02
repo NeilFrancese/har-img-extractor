@@ -9,18 +9,37 @@ A Python tool and Flask web app to extract, preview, and download images directl
 - Download images individually or as a ZIP
 - No external image requests
 
-## Command Line Usage
+
+## Binary Releases
+
+Pre-built executables for Windows, macOS, and Linux are available in the [Releases](https://github.com/NeilFrancese/har-img-extractor/releases) section.
+
+- **CLI:** Download the appropriate `har-img-cli-<os>` binary for your platform and run:
+   ```
+   har-img-cli-<os> <path_to_har_file> [--output <output_folder>]
+   ```
+   Replace `<os>` with `windows.exe`, `macos`, or `linux` as needed.
+
+- **Web App:** Download the appropriate `har-img-app-<os>` binary and run:
+   ```
+   har-img-app-<os>
+   ```
+   Then open your browser to `http://127.0.0.1:5000`.
+
+You can also run from source as described below.
+
+## Command Line Usage (from source)
 
 1. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
+    ```bash
+    pip install -r requirements.txt
+    ```
 2. Run the CLI script:
-   ```bash
-   python extract_images.py <path_to_har_file> [--output <output_folder>]
-   ```
-   - `<path_to_har_file>`: Path to your HAR file
-   - `--output <output_folder>`: (Optional) Output folder for images
+    ```bash
+    python extract_images.py <path_to_har_file> [--output <output_folder>]
+    ```
+    - `<path_to_har_file>`: Path to your HAR file
+    - `--output <output_folder>`: (Optional) Output folder for images
 
 ## Flask Web App Usage
 
