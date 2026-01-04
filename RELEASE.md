@@ -1,3 +1,11 @@
+# Release 1.1.2
+
+## Features & Fixes
+- Gallery filter for images/videos in the web UI
+- CLI and web app now reconstruct chunked images/videos from HAR base64 data (no live URL fetch)
+- Improved reliability for offline/archived HAR extraction
+- Video preview and download support in both CLI and web app
+
 # Features
 
 - Extract images directly from HAR files (base64 only).
