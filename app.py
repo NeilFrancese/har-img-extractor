@@ -28,6 +28,7 @@ def allowed_file(filename):
 
 def extract_image_entries(har_data):
     media_entries = []
+    video_chunks = {}
     for entry in har_data['log']['entries']:
         url = entry['request']['url']
         response = entry.get('response', {})
@@ -42,13 +43,54 @@ def extract_image_entries(har_data):
                 except Exception:
                     content_length = None
                 break
-        if mime_type.startswith('image/') or mime_type.startswith('video/'):
+        if mime_type.startswith('image/'):
             media_entries.append({
                 'url': url,
                 'mime_type': mime_type,
                 'base64_data': base64_data,
                 'content_length': content_length
             })
+        elif mime_type.startswith('video/'):
+            # Use filename as key
+            from urllib.parse import urlparse
+            import os
+            filename = os.path.basename(urlparse(url).path)
+            # Get chunk order from content-range header if present
+            content_range = None
+            for h in response.get('headers', []):
+                if h.get('name', '').lower() == 'content-range':
+                    content_range = h.get('value')
+                    break
+            # Parse start byte for sorting
+            start_byte = 0
+            if content_range:
+                try:
+                    start_byte = int(content_range.split(' ')[1].split('-')[0])
+                except Exception:
+                    start_byte = 0
+            if filename not in video_chunks:
+                video_chunks[filename] = []
+            video_chunks[filename].append({
+                'url': url,
+                'mime_type': mime_type,
+                'base64_data': base64_data,
+                'content_length': content_length,
+                'start_byte': start_byte
+            })
+    # Combine video chunks
+    for filename, chunks in video_chunks.items():
+        # Sort by start_byte
+        sorted_chunks = sorted(chunks, key=lambda x: x['start_byte'])
+        combined_base64 = ''.join([c['base64_data'] for c in sorted_chunks if c['base64_data']])
+        # Use first chunk's metadata for mime_type, url, etc.
+        first = sorted_chunks[0]
+        total_length = sum([c['content_length'] or 0 for c in sorted_chunks])
+        media_entries.append({
+            'url': first['url'],
+            'mime_type': first['mime_type'],
+            'base64_data': combined_base64,
+            'content_length': total_length
+        })
     return media_entries
 
 
@@ -87,7 +129,11 @@ def index():
                 # Prepare base64 data URL for preview
                 data_url = None
                 if entry.get('base64_data'):
-                    data_url = f"data:{entry['mime_type']};base64,{entry['base64_data']}"
+                    if entry['mime_type'].startswith('video/'):
+                        # Use video mime type for data URL
+                        data_url = f"data:{entry['mime_type']};base64,{entry['base64_data']}"
+                    elif entry['mime_type'].startswith('image/'):
+                        data_url = f"data:{entry['mime_type']};base64,{entry['base64_data']}"
                 # Use content_length from entry, fallback to None
                 content_length = entry.get('content_length')
                 media.append({

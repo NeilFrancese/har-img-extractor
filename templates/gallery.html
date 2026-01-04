@@ -63,12 +63,18 @@
         <div style="margin: 1em 0;">
             <label for="minSize">Min Size (KB):</label>
             <input type="number" id="minSize" value="0" style="width:80px;">
+            <label for="mediaType">Type:</label>
+            <select id="mediaType" onchange="filterGallery()">
+                <option value="all">All</option>
+                <option value="image">Images</option>
+                <option value="video">Videos</option>
+            </select>
             <button type="button" class="button" onclick="filterGallery()">Apply Filter</button>
         </div>
 
         <div class="gallery" id="gallery">
             {% for image in images %}
-            <div class="gallery-item" data-size="{{ image.content_length // 1024 if image.content_length else 0 }}">
+            <div class="gallery-item" data-size="{{ image.content_length // 1024 if image.content_length else 0 }}" data-type="{{ 'image' if image.mime_type.startswith('image/') else 'video' if image.mime_type.startswith('video/') else 'other' }}">
                 {% if image.mime_type.startswith('image/') %}
                     <img src="{{ image.data_url }}" alt="Image {{ image.id }}">
                 {% elif image.mime_type.startswith('video/') %}
@@ -93,10 +99,13 @@
     <script>
     function filterGallery() {
         var min = parseInt(document.getElementById('minSize').value) || 0;
+        var type = document.getElementById('mediaType').value;
         var items = document.querySelectorAll('.gallery-item');
         items.forEach(function(item) {
             var size = parseInt(item.getAttribute('data-size')) || 0;
-            if (size >= min) {
+            var mediaType = item.getAttribute('data-type');
+            var typeMatch = (type === 'all') || (type === mediaType);
+            if (size >= min && typeMatch) {
                 item.style.display = '';
             } else {
                 item.style.display = 'none';
